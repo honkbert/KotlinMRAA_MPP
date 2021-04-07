@@ -1,0 +1,6 @@
+headers = /Users/rgulley/work/InteropTest/src/nativeInterop/cinterop/mraa/gpio.h
+headerFilter = /Users/rgulley/work/InteropTest/src/nativeInterop/cinterop/mraa/*
+staticLibraries = libmraa.a
+libraryPaths = /Users/rgulley/Desktop/
+
+compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu

@@ -1,75 +1,124 @@
 import kotlinx.cinterop.*
 import mraa.*
 
-actual class GpioPin(private val pinName: String) : Closeable {
-    constructor(pin: Int) : this(mraa_get_pin_name(pin)?.toKString().orEmpty())
+@OptIn(ExperimentalUnsignedTypes::class)
+actual class GpioPin(private val pin: Int) : Closeable {
 
-    private val gpioContext = mraa_gpio_init_by_name(pinName.cstr)
+    private val _gpioContext: mraa_gpio_contextVar = nativeHeap.alloc()
+    private val gpioContext: mraa_gpio_context
+        get() = _gpioContext.value!!
+
+    init {
+        _gpioContext.value = mraa_gpio_init(pin).ensureUnixCallResult("init gpio $pin") { it != null }!!
+    }
 
     var value: Boolean
         get() {
-            if (direction != Direction.IN) throw Exception("can't read input on output gpio pin $pinName")
-            return mraa_gpio_read(gpioContext).toBoolean()
+            if (direction != Direction.IN) throw Throwable("can't read input on output gpio pin $pin")
+            return mraa_gpio_read(gpioContext).ensureUnixCallResult("read $pin") { it != -1 }
+                .toBoolean()
         }
         set(value) {
-            if (direction == Direction.IN) throw Exception("can't write output on input gpio pin $pinName")
-            mraa_gpio_write(gpioContext, value.toInt())
+            if (direction == Direction.IN) throw Throwable("can't write output on input gpio pin $pin")
+            mraa_gpio_write(
+                gpioContext,
+                value.toInt()
+            )
         }
 
-    fun on() { value = true }
-    fun off() { value = false }
+    fun on() {
+        value = true
+    }
+
+    fun off() {
+        value = false
+    }
 
     var direction: Direction = Direction.IN
-    set(value) {
-        field = value
-        mraa_gpio_dir(gpioContext, value.value)
-    }
+        set(value) {
+            field = value
+            mraa_gpio_dir(
+                gpioContext,
+                value.value
+            )
+        }
 
     var inputMode: InputMode = InputMode.ACTIVE_HIGH
-    set(value) {
-        field = value
-        mraa_gpio_input_mode(gpioContext, value.value)
-    }
+        set(value) {
+            field = value
+            mraa_gpio_input_mode(
+                gpioContext,
+                value.value
+            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+        }
 
     var edgeTriggerType: EdgeTriggerType = EdgeTriggerType.NONE
         set(value) {
-        mraa_gpio_edge_mode(gpioContext, value.value)
-        field = value
-    }
+            field = value
+            mraa_gpio_edge_mode(
+                gpioContext,
+                value.value
+            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+        }
 
-    enum class Direction(val value: UInt) {
-        OUT(MRAA_GPIO_OUT),
-        IN(MRAA_GPIO_IN),
-        OUT_START_LOW(MRAA_GPIO_OUT_LOW),
-        OUT_START_HIGH(MRAA_GPIO_OUT_HIGH),
-    }
+    var outputMode: OutputMode = OutputMode.STRONG
+        set(value) {
+            field = value
+            mraa_gpio_mode(
+                gpioContext,
+                value.value
+            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+        }
 
-    enum class InputMode(val value: UInt) {
-        ACTIVE_HIGH(MRAA_GPIO_ACTIVE_HIGH),
-        ACTIVE_LOW(MRAA_GPIO_ACTIVE_LOW)
-    }
+    companion object {
+        enum class Direction(val value: UInt) {
+            OUT(MRAA_GPIO_OUT),
+            IN(MRAA_GPIO_IN),
+            OUT_START_LOW(MRAA_GPIO_OUT_LOW),
+            OUT_START_HIGH(MRAA_GPIO_OUT_HIGH),
+        }
 
-    enum class EdgeTriggerType (val value: UInt){
-        NONE(MRAA_GPIO_EDGE_NONE),
-        BOTH(MRAA_GPIO_EDGE_BOTH),
-        RISING(MRAA_GPIO_EDGE_RISING),
-        FALLING(MRAA_GPIO_EDGE_FALLING)
+        enum class InputMode(val value: UInt) {
+            ACTIVE_HIGH(MRAA_GPIO_ACTIVE_HIGH),
+            ACTIVE_LOW(MRAA_GPIO_ACTIVE_LOW)
+        }
+
+        enum class EdgeTriggerType(val value: UInt) {
+            NONE(MRAA_GPIO_EDGE_NONE),
+            BOTH(MRAA_GPIO_EDGE_BOTH),
+            RISING(MRAA_GPIO_EDGE_RISING),
+            FALLING(MRAA_GPIO_EDGE_FALLING)
+        }
+
+        enum class OutputMode(val value: UInt) {
+            STRONG(MRAA_GPIO_STRONG),
+            PULLUP(MRAA_GPIO_PULLUP),
+            PULLDOWN(MRAA_GPIO_PULLDOWN),
+            HIZ(MRAA_GPIO_HIZ),
+        }
     }
 
     override fun close() {
         callback = null
+        mraa_gpio_close(gpioContext)
+        nativeHeap.free(_gpioContext)
     }
 
-    private  var callback: (() -> Unit)? = null
+    private var callback: (() -> Unit)? = null
 
     fun registerGpioCallback(callback: () -> Unit) {
         this.callback = callback
-        val fptr = staticCFunction{ foo: CPointer<out CPointed>? ->  }
-        mraa_gpio_isr(gpioContext, edgeTriggerType.value, fptr, null)
+        val fptr = staticCFunction { foo: CPointer<out CPointed>? -> }
+        mraa_gpio_isr(
+            gpioContext,
+            edgeTriggerType.value,
+            fptr,
+            null
+        ).ensureUnixCallResult("register $pin callback") { it != MRAA_SUCCESS }
     }
 
     fun unregisterGpioCallback() {
-        mraa_gpio_isr_exit(gpioContext)
+        mraa_gpio_isr_exit(gpioContext).ensureUnixCallResult("close $pin callback") { it != MRAA_SUCCESS }
         callback = null
     }
 

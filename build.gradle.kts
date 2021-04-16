@@ -9,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 kotlin {
@@ -31,6 +32,7 @@ kotlin {
         val commonMain by getting{
             dependencies{
                 implementation(kotlin("stdlib"))
+                implementation ("com.robgulley:vector-lerp:1.0")
             }
         }
         val commonTest by getting

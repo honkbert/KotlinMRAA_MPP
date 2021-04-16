@@ -6,8 +6,8 @@ actual class PeripheralManager {
         return I2cDeviceImpl(bus, address)
     }
 
-    actual fun openGpio(pinName: String): GpioPin {
-        return GpioPin(pinName)
+    actual fun openGpio(pin: Int): GpioPin {
+        return GpioPin(pin)
     }
 
     private fun error(bus: String, device: Int, register: Int): Nothing =
@@ -18,7 +18,7 @@ class I2cDeviceImpl(busName: String, private val address: Int) : I2cDevice {
 
     private val bus: Int = mraa_i2c_lookup(busName)
 
-    private val i2cContext: mraa_i2c_context = mraa_i2c_init(bus) ?: throw Exception("Could not init I2C bus")
+    private val i2cContext: mraa_i2c_context = mraa_i2c_init(bus).ensureUnixCallResult("init i2c $bus") { it != null} !!
 
     override fun readRegByte(register: Int): Byte {
         return mraa_i2c_read_byte_data(i2cContext, register.convert()).toByte()

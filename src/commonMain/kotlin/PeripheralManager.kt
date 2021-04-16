@@ -1,9 +1,7 @@
 
 expect class PeripheralManager {
     fun openI2cDevice(bus: String, address: Int): I2cDevice
-    fun openGpio(pinName: String): GpioPin
-
-
+    fun openGpio(pin: Int): GpioPin
 }
 
 fun Int.toHexString(): String {

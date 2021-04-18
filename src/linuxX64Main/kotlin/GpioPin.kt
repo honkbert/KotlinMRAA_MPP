@@ -1,5 +1,6 @@
 import kotlinx.cinterop.*
 import mraa.*
+import kotlin.native.concurrent.freeze
 
 @OptIn(ExperimentalUnsignedTypes::class)
 actual class GpioPin(private val pin: Int) : Closeable {
@@ -58,7 +59,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
             mraa_gpio_edge_mode(
                 gpioContext,
                 value.value
-            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+            )
         }
 
     var outputMode: OutputMode = OutputMode.STRONG
@@ -99,26 +100,34 @@ actual class GpioPin(private val pin: Int) : Closeable {
     }
 
     override fun close() {
-        callback = null
+        if (callback != null) unregisterGpioCallback()
         mraa_gpio_close(gpioContext)
         nativeHeap.free(_gpioContext)
     }
 
-    private var callback: (() -> Unit)? = null
+    private var callback: StableRef<GpioCallback>? = null
 
-    fun registerGpioCallback(callback: () -> Unit) {
-        this.callback = callback
-        val fptr = staticCFunction { foo: CPointer<out CPointed>? -> }
+    fun registerGpioCallback(callback: GpioCallback) {
+        val argVoidPtr = StableRef.create(callback.freeze()).let {
+            this.callback = it
+            it.asCPointer()
+        }
+        val funPtr = staticCFunction<COpaquePointer?, Unit> { args ->
+            val stableRef = args?.asStableRef<GpioCallback>()
+            val msg = stableRef?.get()
+            msg?.invoke()
+        }
         mraa_gpio_isr(
             gpioContext,
             edgeTriggerType.value,
-            fptr,
-            null
-        ).ensureUnixCallResult("register $pin callback") { it != MRAA_SUCCESS }
+            funPtr,
+            argVoidPtr
+        )
     }
 
     fun unregisterGpioCallback() {
-        mraa_gpio_isr_exit(gpioContext).ensureUnixCallResult("close $pin callback") { it != MRAA_SUCCESS }
+        mraa_gpio_isr_exit(gpioContext)
+        callback?.dispose()
         callback = null
     }
 

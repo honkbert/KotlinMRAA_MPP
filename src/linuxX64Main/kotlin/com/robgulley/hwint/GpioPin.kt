@@ -1,9 +1,12 @@
+package com.robgulley.hwint
+
 import kotlinx.cinterop.*
 import mraa.*
 import kotlin.native.concurrent.freeze
 
 @OptIn(ExperimentalUnsignedTypes::class)
-actual class GpioPin(private val pin: Int) : Closeable {
+actual class GpioPin actual constructor(pinNum: Int) {
+    private val pin = pinNum
 
     private val _gpioContext: mraa_gpio_contextVar = nativeHeap.alloc()
     private val gpioContext: mraa_gpio_context
@@ -13,7 +16,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
         _gpioContext.value = mraa_gpio_init(pin).ensureUnixCallResult("init gpio $pin") { it != null }!!
     }
 
-    var value: Boolean
+    actual var value: Boolean
         get() {
             if (direction != Direction.IN) throw Throwable("can't read input on output gpio pin $pin")
             return mraa_gpio_read(gpioContext).ensureUnixCallResult("read $pin") { it != -1 }
@@ -27,15 +30,15 @@ actual class GpioPin(private val pin: Int) : Closeable {
             )
         }
 
-    fun on() {
+    actual fun on() {
         value = true
     }
 
-    fun off() {
+    actual fun off() {
         value = false
     }
 
-    var direction: Direction = Direction.IN
+    actual var direction: Direction = Direction.IN
         set(value) {
             field = value
             mraa_gpio_dir(
@@ -44,7 +47,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
             )
         }
 
-    var inputMode: InputMode = InputMode.ACTIVE_HIGH
+    actual var inputMode: InputMode = InputMode.ACTIVE_HIGH
         set(value) {
             field = value
             mraa_gpio_input_mode(
@@ -53,7 +56,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
             ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
         }
 
-    var edgeTriggerType: EdgeTriggerType = EdgeTriggerType.NONE
+    actual var edgeTriggerType: EdgeTriggerType = EdgeTriggerType.NONE
         set(value) {
             field = value
             mraa_gpio_edge_mode(
@@ -62,7 +65,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
             )
         }
 
-    var outputMode: OutputMode = OutputMode.STRONG
+    actual var outputMode: OutputMode = OutputMode.STRONG
         set(value) {
             field = value
             mraa_gpio_mode(
@@ -71,27 +74,27 @@ actual class GpioPin(private val pin: Int) : Closeable {
             ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
         }
 
-    companion object {
-        enum class Direction(val value: UInt) {
+    actual companion object {
+        actual enum class Direction(val value: UInt) {
             OUT(MRAA_GPIO_OUT),
             IN(MRAA_GPIO_IN),
             OUT_START_LOW(MRAA_GPIO_OUT_LOW),
             OUT_START_HIGH(MRAA_GPIO_OUT_HIGH),
         }
 
-        enum class InputMode(val value: UInt) {
+        actual enum class InputMode(val value: UInt) {
             ACTIVE_HIGH(MRAA_GPIO_ACTIVE_HIGH),
             ACTIVE_LOW(MRAA_GPIO_ACTIVE_LOW)
         }
 
-        enum class EdgeTriggerType(val value: UInt) {
+        actual enum class EdgeTriggerType(val value: UInt) {
             NONE(MRAA_GPIO_EDGE_NONE),
             BOTH(MRAA_GPIO_EDGE_BOTH),
             RISING(MRAA_GPIO_EDGE_RISING),
             FALLING(MRAA_GPIO_EDGE_FALLING)
         }
 
-        enum class OutputMode(val value: UInt) {
+        actual enum class OutputMode(val value: UInt) {
             STRONG(MRAA_GPIO_STRONG),
             PULLUP(MRAA_GPIO_PULLUP),
             PULLDOWN(MRAA_GPIO_PULLDOWN),
@@ -99,7 +102,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
         }
     }
 
-    override fun close() {
+     actual fun close() {
         if (callback != null) unregisterGpioCallback()
         mraa_gpio_close(gpioContext)
         nativeHeap.free(_gpioContext)
@@ -107,7 +110,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
 
     private var callback: StableRef<GpioCallback>? = null
 
-    fun registerGpioCallback(callback: GpioCallback) {
+    actual fun registerGpioCallback(callback: GpioCallback) {
         val argVoidPtr = StableRef.create(callback.freeze()).let {
             this.callback = it
             it.asCPointer()
@@ -125,7 +128,7 @@ actual class GpioPin(private val pin: Int) : Closeable {
         )
     }
 
-    fun unregisterGpioCallback() {
+    actual fun unregisterGpioCallback() {
         mraa_gpio_isr_exit(gpioContext)
         callback?.dispose()
         callback = null

@@ -1,3 +1,5 @@
+package com.robgulley.hwint
+
 import kotlinx.cinterop.toKString
 import platform.posix.posix_errno
 import platform.posix.strerror

@@ -12,7 +12,14 @@ repositories {
 }
 
 kotlin {
-    configure(listOf(linuxX64())) {
+    macosX64() {
+        binaries {
+            executable {
+                entryPoint = "main"
+            }
+        }
+    }
+    linuxX64() {
         binaries {
             executable {
                 entryPoint = "main"
@@ -28,23 +35,26 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting{
+        val desktopMain by creating {
             dependencies{
                 implementation(kotlin("stdlib"))
                 implementation ("com.robgulley:vector-lerp:1.0")
             }
         }
-        val commonTest by getting
+        val desktopTest by creating{}
 //        val linuxArm64Main by getting
 //        val linuxArm64Test by getting
         val linuxX64Main by getting {
+            dependsOn(desktopMain)
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
 //                implementation ("com.autodesk:coroutineworker:0.6.3")
             }
         }
         val linuxX64Test by getting
-//        val macosX64Main by getting
-//        val macosX64Test by getting
+        val macosX64Main by getting {
+            dependsOn(desktopMain)
+        }
+        val macosX64Test by getting
     }
 }

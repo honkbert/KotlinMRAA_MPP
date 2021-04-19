@@ -1,4 +1,6 @@
 import com.robgulley.Sleep
+import com.robgulley.hwint.GpioPin
+import com.robgulley.hwint.PeripheralManager
 import kotlinx.cinterop.convert
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED

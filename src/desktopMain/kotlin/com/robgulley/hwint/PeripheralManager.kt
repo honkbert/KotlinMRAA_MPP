@@ -1,3 +1,4 @@
+package com.robgulley.hwint
 
 expect class PeripheralManager {
     fun openI2cDevice(bus: String, address: Int): I2cDevice

@@ -1,4 +1,6 @@
-interface I2cDevice : Closeable {
+package com.robgulley.hwint
+
+interface I2cDevice {
     fun readRegByte(register: Int): Byte
 
     fun readRegWord(register: Int): Int

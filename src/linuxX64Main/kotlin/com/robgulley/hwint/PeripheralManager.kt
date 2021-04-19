@@ -1,3 +1,5 @@
+package com.robgulley.hwint
+
 import kotlinx.cinterop.*
 import mraa.*
 
@@ -69,11 +71,11 @@ class I2cDeviceImpl(busName: String, private val address: Int) : I2cDevice {
                 bytes.addressOf(0).reinterpret(),
                 length
             ).let { if (it.convert<Int>() != 0) throw Exception("write failed!") }
-            //TODO ensureUnixCallResult
+            //TODO com.robgulley.hwint.ensureUnixCallResult
         }
     }
 
-    override fun close() {
+    fun close() {
         mraa_i2c_stop(i2cContext)
     }
 

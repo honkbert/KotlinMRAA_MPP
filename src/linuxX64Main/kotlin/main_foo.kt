@@ -12,13 +12,13 @@ import platform.posix.sleep
 import kotlin.native.concurrent.freeze
 import kotlin.system.getTimeMicros
 
-fun main(args: Array<String>): Unit = runBlocking {
+fun main_foo(args: Array<String>): Unit = runBlocking {
     println("Hello, Kotlin/Native!")
-    val peripheralManager = PeripheralManager()
-    val sourcePin = args[0].toInt()
-    val targetPin = args[1].toInt()
-    val repeat = args[2].toInt()
 
+}
+
+private fun gpioInteruptTest(sourcePin: Int, targetPin: Int, repeat: Int) = runBlocking {
+    val peripheralManager = PeripheralManager()
     val pinSource = peripheralManager.openGpio(sourcePin)
     delay(100)
     val pinTarget = peripheralManager.openGpio(targetPin)
@@ -71,7 +71,7 @@ fun main(args: Array<String>): Unit = runBlocking {
     broadcastChannel.close()
 }
 
-private fun basicRead(sourcePin: Int, targetPin: Int, repeat: Int) {
+private fun basicGpioRead(sourcePin: Int, targetPin: Int, repeat: Int) = runBlocking {
     val peripheralManager = PeripheralManager()
     val pinSource = peripheralManager.openGpio(sourcePin)
     Sleep.blockFor(100)
@@ -100,7 +100,7 @@ private fun basicRead(sourcePin: Int, targetPin: Int, repeat: Int) {
     println("closed")
 }
 
-private fun basicLoop(pins: Array<Int>) {
+private fun basicGpioLoop(pins: Array<Int>) = runBlocking {
     val peripheralManager = PeripheralManager()
     for (i in pins) {
         try {

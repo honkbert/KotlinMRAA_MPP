@@ -1,23 +1,55 @@
 import com.robgulley.Sleep
 import com.robgulley.hwint.GpioPin
 import com.robgulley.hwint.PeripheralManager
+import com.robgulley.hwint.format
+import com.robgulley.hwint.test.MPU6050
+import com.robgulley.hwint.toHexString
 import kotlinx.cinterop.convert
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.collect
 import platform.posix.sleep
 import kotlin.native.concurrent.freeze
 import kotlin.system.getTimeMicros
 
 fun main_foo(args: Array<String>): Unit = runBlocking {
-    println("Hello, Kotlin/Native!")
+    kotlin.io.println("Hello, Kotlin/Native!")
 
+    gpioInterruptTest(args[0].toInt(), args[1].toInt(), args[2].toInt(), this)
+    i2cReadWriteTest(this)
 }
 
-private fun gpioInteruptTest(sourcePin: Int, targetPin: Int, repeat: Int) = runBlocking {
+private suspend fun i2cReadWriteTest(coroutineScope: CoroutineScope) = coroutineScope.launch  {
+    val peripheralManager = PeripheralManager()
+    val mpu6050 = MPU6050(peripheralManager, this)
+    delay(500)
+
+    launch { mpu6050.accelData.collect { kotlin.io.println("accel: x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
+    launch { mpu6050.gyroData.collect { kotlin.io.println("gyro:  x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
+    mpu6050.startRead()
+    delay(7500)
+    mpu6050.close()
+    mpu6050.stopRead()
+    currentCoroutineContext().cancelChildren()
+}
+
+private fun i2cHelloTest() = runBlocking {
+    val peripheralManager = PeripheralManager()
+    val i2cDevice = peripheralManager.openI2cDevice("I2C0", 0x68)
+    delay(100)
+    val whoAmIByte = i2cDevice.readRegByte(0x75)
+    val whoAmIWord = i2cDevice.readRegWord(0x75)
+    val whoAmIBuffer = ByteArray(1).also { i2cDevice.readRegBuffer(0x75, it, 1) }.first()
+    i2cDevice.close()
+
+    println("who am I? expect: 0x73, actual ${whoAmIByte.toHexString()}")
+    println("who am I? expect: 0x73, actual ${whoAmIWord.toHexString()}")
+    println("who am I? expect: 0x73, actual ${whoAmIBuffer.toHexString()}")
+}
+
+private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, coroutineScope: CoroutineScope) = coroutineScope.launch {
     val peripheralManager = PeripheralManager()
     val pinSource = peripheralManager.openGpio(sourcePin)
     delay(100)
@@ -46,7 +78,7 @@ private fun gpioInteruptTest(sourcePin: Int, targetPin: Int, repeat: Int) = runB
 
     pinTarget.registerGpioCallback {
         val time = (getTimeMicros() - started) / 1000000.0
-        broadcastChannel.offer("$time") //) .tryEmit("$time")
+        broadcastChannel.offer("$time")
     }
     println("directions set")
 

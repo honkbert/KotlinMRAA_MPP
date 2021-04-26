@@ -3,8 +3,8 @@ package com.robgulley.hwint
 expect class GpioPin(pinNum: Int) {
     var value: Boolean
 
-    fun on()
-    fun off()
+    suspend fun on()
+    suspend fun off()
 
     var direction: Direction
     var inputMode: InputMode

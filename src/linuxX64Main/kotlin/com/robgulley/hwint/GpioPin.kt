@@ -13,13 +13,13 @@ actual class GpioPin actual constructor(pinNum: Int) {
         get() = _gpioContext.value!!
 
     init {
-        _gpioContext.value = mraa_gpio_init(pin).ensureUnixCallResult("init gpio $pin") { it != null }!!
+        _gpioContext.value = mraa_gpio_init(pin).ensurePosixCallResult("init gpio $pin") { it != null }!!
     }
 
     actual var value: Boolean
         get() {
             if (direction != Direction.IN) throw Throwable("can't read input on output gpio pin $pin")
-            return mraa_gpio_read(gpioContext).ensureUnixCallResult("read $pin") { it != -1 }
+            return mraa_gpio_read(gpioContext).ensurePosixCallResult("read $pin") { it != -1 }
                 .toBoolean()
         }
         set(value) {
@@ -27,14 +27,14 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_write(
                 gpioContext,
                 value.toInt()
-            )
+            ).ensureSuccess("write $value to $pin")
         }
 
-    actual fun on() {
+    actual suspend fun on() {
         value = true
     }
 
-    actual fun off() {
+    actual suspend fun off() {
         value = false
     }
 
@@ -44,7 +44,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_dir(
                 gpioContext,
                 value.value
-            )
+            ).ensureSuccess("set ${value.name} pin: $pin")
         }
 
     actual var inputMode: InputMode = InputMode.ACTIVE_HIGH
@@ -53,7 +53,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_input_mode(
                 gpioContext,
                 value.value
-            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+            ).ensureSuccess("set ${value.name} pin: $pin")
         }
 
     actual var edgeTriggerType: EdgeTriggerType = EdgeTriggerType.NONE
@@ -62,7 +62,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_edge_mode(
                 gpioContext,
                 value.value
-            )
+            ).ensureSuccess("set ${value.name} pin: $pin")
         }
 
     actual var outputMode: OutputMode = OutputMode.STRONG
@@ -71,7 +71,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_mode(
                 gpioContext,
                 value.value
-            ).ensureUnixCallResult("set ${value.name} pin: $pin") { it != MRAA_SUCCESS }
+            ).ensureSuccess("set ${value.name} pin: $pin")
         }
 
     actual companion object {
@@ -103,35 +103,29 @@ actual class GpioPin actual constructor(pinNum: Int) {
     }
 
      actual fun close() {
-        if (callback != null) unregisterGpioCallback()
+        unregisterGpioCallback()
         mraa_gpio_close(gpioContext)
         nativeHeap.free(_gpioContext)
     }
 
-    private var callback: StableRef<GpioCallback>? = null
-
     actual fun registerGpioCallback(callback: GpioCallback) {
-        val argVoidPtr = StableRef.create(callback.freeze()).let {
-            this.callback = it
-            it.asCPointer()
-        }
+        val argVoidPtr = StableRef.create(callback.freeze()).asCPointer()
         val funPtr = staticCFunction<COpaquePointer?, Unit> { args ->
             val stableRef = args?.asStableRef<GpioCallback>()
-            val msg = stableRef?.get()
-            msg?.invoke()
+            val func = stableRef?.get()
+            func?.invoke()
         }
         mraa_gpio_isr(
             gpioContext,
             edgeTriggerType.value,
             funPtr,
             argVoidPtr
-        )
+        ).ensureSuccess("set interrupt")
     }
 
     actual fun unregisterGpioCallback() {
         mraa_gpio_isr_exit(gpioContext)
-        callback?.dispose()
-        callback = null
+        //TODO figure out how to dispose callback
     }
 
     private fun Boolean.toInt() = when (this) {

@@ -6,10 +6,10 @@ actual class GpioPin actual constructor(pinNum: Int) {
         get() = TODO("Not yet implemented")
         set(value) {}
 
-    actual fun on() {
+    actual suspend fun on() {
     }
 
-    actual fun off() {
+    actual suspend fun off() {
     }
 
     actual var direction: Direction

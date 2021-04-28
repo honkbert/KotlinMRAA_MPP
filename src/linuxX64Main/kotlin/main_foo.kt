@@ -15,7 +15,7 @@ import kotlin.native.concurrent.freeze
 import kotlin.system.getTimeMicros
 
 fun main_foo(args: Array<String>): Unit = runBlocking {
-    kotlin.io.println("Hello, Kotlin/Native!")
+    println("Hello, Kotlin/Native!")
 
     gpioInterruptTest(args[0].toInt(), args[1].toInt(), args[2].toInt(), this)
     i2cReadWriteTest(this)
@@ -26,8 +26,8 @@ private suspend fun i2cReadWriteTest(coroutineScope: CoroutineScope) = coroutine
     val mpu6050 = MPU6050(peripheralManager, this)
     delay(500)
 
-    launch { mpu6050.accelData.collect { kotlin.io.println("accel: x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
-    launch { mpu6050.gyroData.collect { kotlin.io.println("gyro:  x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
+    launch { mpu6050.accelData.collect { println("accel: x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
+    launch { mpu6050.gyroData.collect { println("gyro:  x: ${it.x.format(3)}\ty: ${it.y.format(3)}\tz: ${it.z.format(3)}") } }
     mpu6050.startRead()
     delay(7500)
     mpu6050.close()
@@ -44,9 +44,9 @@ private fun i2cHelloTest() = runBlocking {
     val whoAmIBuffer = ByteArray(1).also { i2cDevice.readRegBuffer(0x75, it, 1) }.first()
     i2cDevice.close()
 
-    println("who am I? expect: 0x73, actual ${whoAmIByte.toHexString()}")
-    println("who am I? expect: 0x73, actual ${whoAmIWord.toHexString()}")
-    println("who am I? expect: 0x73, actual ${whoAmIBuffer.toHexString()}")
+    printlnTime("who am I? expect: 0x73, actual ${whoAmIByte.toHexString()}")
+    printlnTime("who am I? expect: 0x73, actual ${whoAmIWord.toHexString()}")
+    printlnTime("who am I? expect: 0x73, actual ${whoAmIBuffer.toHexString()}")
 }
 
 private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, coroutineScope: CoroutineScope) = coroutineScope.launch {
@@ -66,13 +66,13 @@ private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, corou
 
     launch {
 //        CoroutineWorker.withContext(IODispatcher) {
-        println("start")
+        printlnTime("start")
         val list = mutableListOf<String>()
-        println("start flow")
+        printlnTime("start flow")
         receiveChannel.consumeEach { list.add(it) }
 //            flow.take(4).collect { list.add(it) }
-        println("got flow")
-        list.forEach { kotlin.io.println(it) }
+        printlnTime("got flow")
+        list.forEach { println(it) }
 //        }
     }
 
@@ -80,26 +80,26 @@ private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, corou
         val time = (getTimeMicros() - started) / 1000000.0
         broadcastChannel.offer("$time")
     }
-    println("directions set")
+    printlnTime("directions set")
 
     for (count in 1..repeat) {
-        println("test $count of $repeat")
+        printlnTime("test $count of $repeat")
         pinSource.off()
-        println("source off")
+        printlnTime("source off")
         delay(250)
-        println("slept .25 second")
+        printlnTime("slept .25 second")
         pinSource.on()
-        println("source on")
+        printlnTime("source on")
         delay(250)
-        println("slept .25 second")
+        printlnTime("slept .25 second")
         pinSource.off()
-        println("off")
+        printlnTime("off")
     }
 
     pinSource.close()
     pinTarget.unregisterGpioCallback()
     pinTarget.close()
-    println("closed")
+    printlnTime("closed")
     broadcastChannel.close()
 }
 
@@ -111,48 +111,48 @@ private fun basicGpioRead(sourcePin: Int, targetPin: Int, repeat: Int) = runBloc
     Sleep.blockFor(100)
     pinSource.direction = GpioPin.Companion.Direction.OUT
     pinTarget.direction = GpioPin.Companion.Direction.IN
-    println("directions set")
+    printlnTime("directions set")
     for (count in 1..repeat) {
-        println("test $count of $repeat")
+        printlnTime("test $count of $repeat")
         pinSource.off()
-        println("source off")
+        printlnTime("source off")
         Sleep.blockFor(500)
         val read1 = pinTarget.value
-        println("slept .5 second, target pin reads $read1")
+        printlnTime("slept .5 second, target pin reads $read1")
         pinSource.on()
-        println("source on")
+        printlnTime("source on")
         Sleep.blockFor(500)
         val read2 = pinTarget.value
-        println("slept .5 second, target pin reads $read2")
+        printlnTime("slept .5 second, target pin reads $read2")
         pinSource.off()
-        println("off")
+        printlnTime("off")
     }
     pinSource.close()
     pinTarget.close()
-    println("closed")
+    printlnTime("closed")
 }
 
 private fun basicGpioLoop(pins: Array<Int>) = runBlocking {
     val peripheralManager = PeripheralManager()
     for (i in pins) {
         try {
-            println("try pin $i")
+            printlnTime("try pin $i")
             val pin = peripheralManager.openGpio(i)
-            println("init'd")
+            printlnTime("init'd")
             pin.direction = GpioPin.Companion.Direction.OUT
-            println("out set")
+            printlnTime("out set")
             pin.off()
-            println("off")
+            printlnTime("off")
             sleep(1.convert())
-            println("slept 1")
+            printlnTime("slept 1")
             pin.on()
-            println("on")
+            printlnTime("on")
             sleep(1.convert())
-            println("slept 1")
+            printlnTime("slept 1")
             pin.off()
-            println("off")
+            printlnTime("off")
             pin.close()
-            println("closed")
+            printlnTime("closed")
         } catch (e: Throwable) {
             println(e)
         }
@@ -161,7 +161,7 @@ private fun basicGpioLoop(pins: Array<Int>) = runBlocking {
 
 val started = getTimeMicros()
 
-fun println(msg: String) {
+fun printlnTime(msg: String) {
     val time = (getTimeMicros() - started) / 1000000.0
-    kotlin.io.println("$time: $msg")
+    println("$time: $msg")
 }

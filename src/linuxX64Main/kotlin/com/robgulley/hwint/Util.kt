@@ -13,4 +13,4 @@ inline fun <T> T.ensurePosixCallResult(op: String, predicate: (T) -> Boolean): T
     return this
 }
 
-fun mraa_result_t.ensureSuccess(debugString: String) = this.ensurePosixCallResult(debugString) { it == mraa.MRAA_SUCCESS }
+fun mraa_result_t.ensureSuccess(debugString: String) = this.ensurePosixCallResult(debugString) { it == MRAA_SUCCESS }

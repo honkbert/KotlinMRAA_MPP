@@ -4,11 +4,9 @@ import com.robgulley.Sleep
 import kotlinx.cinterop.*
 import mraa.*
 
-@OptIn(ExperimentalUnsignedTypes::class)
-class I2cDeviceImpl(busName: String, deviceAddress: Int) : I2cDevice {
+class I2cDeviceImpl(busName: String, address: Int) : I2cDevice {
 
     private val bus: Int = busName.toUpperCase().replace("I2C", "").toInt()
-    private val address: UByte = deviceAddress.convert()
 
     private val _i2cContext: mraa_i2c_contextVar = nativeHeap.alloc()
     private val i2cBusContext: mraa_i2c_context
@@ -18,7 +16,7 @@ class I2cDeviceImpl(busName: String, deviceAddress: Int) : I2cDevice {
         mraa_init()
         _i2cContext.value = mraa_i2c_init(bus).ensurePosixCallResult("init i2c $bus") { it != null }!!
         Sleep.blockFor(100)
-        mraa_i2c_address(i2cBusContext, address).ensureSuccess("init i2c device ${address.toHexString()}")
+        mraa_i2c_address(i2cBusContext, address.convert()).ensureSuccess("init i2c device ${address.toHexString()}")
     }
 
     override fun readRegByte(register: Int): Byte {

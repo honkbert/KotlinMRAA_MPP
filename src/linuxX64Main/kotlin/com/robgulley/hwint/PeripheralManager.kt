@@ -8,4 +8,8 @@ actual class PeripheralManager {
     actual fun openGpio(pin: Int): GpioPin {
         return GpioPin(pin)
     }
+
+    actual fun openUartDevice(uartName: String):UartDevice {
+        return UartDevice(uartName)
+    }
 }

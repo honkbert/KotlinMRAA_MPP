@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.robgulley"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -28,11 +28,14 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("com.robgulley:vector-lerp:1.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
             }
         }
         val desktopTest by creating {}
+
 //        val linuxArm64Main by getting
 //        val linuxArm64Test by getting
+
         val linuxX64Main by getting {
             dependsOn(desktopMain)
             dependencies {
@@ -40,6 +43,7 @@ kotlin {
             }
         }
         val linuxX64Test by getting
+
         val macosX64Main by getting {
             dependsOn(desktopMain)
         }

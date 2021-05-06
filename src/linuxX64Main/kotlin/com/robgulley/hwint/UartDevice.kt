@@ -2,19 +2,25 @@
 
 package com.robgulley.hwint
 
+import com.robgulley.time.Sleep
 import kotlinx.cinterop.*
+import kotlinx.coroutines.*
 import mraa.*
 
 @ExperimentalUnsignedTypes
-actual class UartDevice actual constructor(uartName: String) {
+actual class UartDevice actual constructor(uartName: String, private val coroutineScope: CoroutineScope?) {
 
     private val _uartDeviceContext: mraa_uart_contextVar = nativeHeap.alloc()
     private val uartDeviceContext: mraa_uart_context get() = _uartDeviceContext.value!!
+    private var callbackJob: Job? = null
 
     init {
-        _uartDeviceContext.value = mraa_uart_init(uartName.toInt())
-            .ensurePosixCallResult("uart init")
+        _uartDeviceContext.value = mraa_uart_init_raw(uartName)
+            .ensurePosixCallResult("uart init $uartName")
             { it != null }!!
+        Sleep.blockFor(100)
+        mraa_uart_set_timeout(uartDeviceContext, 10, 10, 0)
+        Sleep.blockFor(100)
     }
 
     actual fun write(data: ByteArray, len: Long): Int {
@@ -80,11 +86,20 @@ actual class UartDevice actual constructor(uartName: String) {
     }
 
     actual fun registerUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
-
+        coroutineScope?.let {
+            callbackJob = it.launch(start = CoroutineStart.LAZY) {
+                while (isActive) {
+                    uartDeviceCallback.onUartDeviceDataAvailable(this@UartDevice)
+                    delay(100)
+                }
+            }
+            callbackJob?.start()
+        }
     }
 
     actual fun unregisterUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
-
+        //TODO keep track of multiple callbacks?
+        callbackJob?.cancel()
     }
 
     actual fun close() {
@@ -96,12 +111,16 @@ actual class UartDevice actual constructor(uartName: String) {
         /// UART Parity
         actual enum class UartParity(val value: UInt) {
             UART_PARITY_NONE(0u),
+
             /**< No parity */
             UART_PARITY_EVEN(1u),
+
             /**< Even parity */
             UART_PARITY_ODD(2u),
+
             /**< Odd parity */
             UART_PARITY_MARK(3u),
+
             /**< Mark parity, always 1 */
             UART_PARITY_SPACE(4u),
             /**< Space parity, always 0 */
@@ -110,20 +129,28 @@ actual class UartDevice actual constructor(uartName: String) {
         /// Modem control lines.
         actual enum class UartModemControlLine(val value: UByte) {
             UART_MODEM_CONTROL_LE((1 shl 0).toUByte()),
+
             /**< Data set ready/Line enable */
             UART_MODEM_CONTROL_DTR((1 shl 1).toUByte()),
+
             /**< Data terminal ready */
             UART_MODEM_CONTROL_RTS((1 shl 2).toUByte()),
+
             /**< Request to send */
             UART_MODEM_CONTROL_ST((1 shl 3).toUByte()),
+
             /**< Secondary TXD */
             UART_MODEM_CONTROL_SR((1 shl 4).toUByte()),
+
             /**< Secondary RXD */
             UART_MODEM_CONTROL_CTS((1 shl 5).toUByte()),
+
             /**< Clear to send */
             UART_MODEM_CONTROL_CD((1 shl 6).toUByte()),
+
             /**< Data carrier detect */
             UART_MODEM_CONTROL_RI((1 shl 7).toUByte()),
+
             /**< Ring */
             UART_MODEM_CONTROL_DSR((1 shl 8).toUByte()),
             /**< Data set ready */
@@ -132,6 +159,7 @@ actual class UartDevice actual constructor(uartName: String) {
         // Hardware Flow Control
         actual enum class UartHardwareFlowControl(val value: UInt) {
             UART_HARDWARE_FLOW_CONTROL_NONE(0u),
+
             /**< No hardware flow control */
             UART_HARDWARE_FLOW_CONTROL_AUTO_RTSCTS(1u),
             /**< Auto RTS/CTS */
@@ -140,8 +168,10 @@ actual class UartDevice actual constructor(uartName: String) {
         /// Flush queue selection
         actual enum class UartFlushDirection(val value: UInt) {
             UART_FLUSH_IN(0u),
+
             /**< Flushes data received but not read */
             UART_FLUSH_OUT(1u),
+
             /**< Flushes data written but not transmitted */
             UART_FLUSH_IN_OUT(2u),
             /**< Flushes both in and out */

@@ -1,6 +1,6 @@
 package com.robgulley.hwint
 
-import com.robgulley.Sleep
+import com.robgulley.time.Sleep
 import kotlinx.cinterop.*
 import mraa.*
 
@@ -13,10 +13,10 @@ class I2cDeviceImpl(busName: String, address: Int) : I2cDevice {
         get() = _i2cContext.value!!
 
     init {
-        mraa_init()
         _i2cContext.value = mraa_i2c_init(bus).ensurePosixCallResult("init i2c $bus") { it != null }!!
         Sleep.blockFor(100)
         mraa_i2c_address(i2cBusContext, address.convert()).ensureSuccess("init i2c device ${address.toHexString()}")
+        Sleep.blockFor(100)
     }
 
     override fun readRegByte(register: Int): Byte {

@@ -1,7 +1,9 @@
 package com.robgulley.hwint
 
+import kotlinx.coroutines.CoroutineScope
+
 @ExperimentalUnsignedTypes
-expect class UartDevice(uartName: String) {
+expect class UartDevice(uartName: String, coroutineScope: CoroutineScope? = null) {
 
     companion object {
         /// UART Parity

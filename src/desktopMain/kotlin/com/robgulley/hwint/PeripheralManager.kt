@@ -1,11 +1,12 @@
 package com.robgulley.hwint
 
+import kotlinx.coroutines.CoroutineScope
 import kotlin.math.roundToInt
 
 expect class PeripheralManager constructor() {
     fun openI2cDevice(bus: String, address: Int): I2cDevice
     fun openGpio(pin: Int): GpioPin
-    fun openUartDevice(uartName: String): UartDevice
+    fun openUartDevice(uartName: String, coroutineScope: CoroutineScope? = null): UartDevice
 }
 
 fun Int.toHexString(): String {

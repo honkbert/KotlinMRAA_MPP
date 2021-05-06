@@ -1,8 +1,8 @@
 package com.robgulley.hwint.test
 
 
-import com.robgulley.Sleep
 import com.robgulley.hwint.PeripheralManager
+import com.robgulley.time.Sleep
 import com.robgulley.vector.Vector
 import kotlinx.cinterop.convert
 import kotlinx.coroutines.*

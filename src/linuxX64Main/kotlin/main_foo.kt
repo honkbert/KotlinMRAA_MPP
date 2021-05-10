@@ -15,6 +15,7 @@ import kotlin.system.getTimeMicros
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main_foo(args: Array<String>): Unit = runBlocking {
     println("Hello, Kotlin/Native!")
+    uartTest(args[0], this)
 }
 
 @OptIn(ExperimentalUnsignedTypes::class)

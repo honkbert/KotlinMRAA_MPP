@@ -2,6 +2,7 @@
 
 package com.robgulley.hwint
 
+import com.robgulley.time.Time
 import kotlinx.cinterop.*
 import mraa.*
 import kotlin.native.concurrent.freeze
@@ -104,10 +105,33 @@ actual class GpioPin actual constructor(pinNum: Int) {
         }
     }
 
-     actual fun close() {
+    actual fun close() {
         unregisterGpioCallback()
         mraa_gpio_close(gpioContext)
         nativeHeap.free(_gpioContext)
+    }
+
+    actual fun listenForTriggers() {
+//        val argVoidPtr = StableRef.create(bullshitFlow).asCPointer()
+        val funPtr = staticCFunction<COpaquePointer?, Unit> { args ->
+            initRuntimeIfNeeded()
+//            val stableRef = args?.asStableRef<IsolateState<MutableSharedFlow<Long>>>()
+//            val func = stableRef?.get()
+            val timestamp = Time.now().nanoTime
+            println("trigger")
+            GpioPinTriggers.gpioTriggers.access { it.tryEmit(timestamp) }
+//            func?.access { it.tryEmit(timestamp) }
+        }
+        mraa_gpio_isr(
+            gpioContext,
+            edgeTriggerType.value,
+            funPtr,
+            null
+        ).ensureSuccess("set interrupt")
+    }
+
+    actual fun stopListenForTriggers() {
+        mraa_gpio_isr_exit(gpioContext)
     }
 
     actual fun registerGpioCallback(callback: GpioCallback) {

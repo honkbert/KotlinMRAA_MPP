@@ -1,5 +1,7 @@
 package com.robgulley.hwint
 
+import co.touchlab.stately.isolate.IsolateState
+
 actual class GpioPin actual constructor(pinNum: Int) {
 
     actual var value: Boolean
@@ -54,5 +56,14 @@ actual class GpioPin actual constructor(pinNum: Int) {
     actual fun unregisterGpioCallback() {
     }
 
+    actual fun listenForTriggers(callback: FooState<GpioTimestamp>) {
+        TODO("Not yet implemented")
+    }
+
+    actual fun stopListenForTriggers() {
+    }
+
 
 }
+
+actual typealias FooState<T> = IsolateState<T>

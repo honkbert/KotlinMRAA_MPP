@@ -1,5 +1,6 @@
 package com.robgulley.hwint
 
+
 expect class GpioPin(pinNum: Int) {
     var value: Boolean
 
@@ -32,4 +33,6 @@ expect class GpioPin(pinNum: Int) {
     fun close()
     fun registerGpioCallback(callback: GpioCallback)
     fun unregisterGpioCallback()
+    fun listenForTriggers()
+    fun stopListenForTriggers()
 }

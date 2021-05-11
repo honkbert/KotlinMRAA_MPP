@@ -1,11 +1,8 @@
 package com.robgulley.hwint
 
-import kotlinx.coroutines.CoroutineScope
-
 @ExperimentalUnsignedTypes
 actual class UartDevice actual constructor(
-    uartName: String,
-    coroutineScope: CoroutineScope?
+    uartName: String
 ) {
     actual companion object {
         /// UART Parity
@@ -115,12 +112,6 @@ actual class UartDevice actual constructor(
     }
 
     actual fun flush(direction: UartFlushDirection) {
-    }
-
-    actual fun registerUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
-    }
-
-    actual fun unregisterUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
     }
 
     actual fun close() {

@@ -4,15 +4,13 @@ package com.robgulley.hwint
 
 import com.robgulley.time.Sleep
 import kotlinx.cinterop.*
-import kotlinx.coroutines.*
 import mraa.*
 
 @ExperimentalUnsignedTypes
-actual class UartDevice actual constructor(uartName: String, private val coroutineScope: CoroutineScope?) {
+actual class UartDevice actual constructor(uartName: String) {
 
     private val _uartDeviceContext: mraa_uart_contextVar = nativeHeap.alloc()
     private val uartDeviceContext: mraa_uart_context get() = _uartDeviceContext.value!!
-    private var callbackJob: Job? = null
 
     init {
         _uartDeviceContext.value = mraa_uart_init_raw(uartName)
@@ -83,23 +81,6 @@ actual class UartDevice actual constructor(uartName: String, private val corouti
 
     actual fun flush(direction: UartFlushDirection) {
         mraa_uart_flush(uartDeviceContext).ensureSuccess("uart flush")
-    }
-
-    actual fun registerUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
-        coroutineScope?.let {
-            callbackJob = it.launch(start = CoroutineStart.LAZY) {
-                while (isActive) {
-                    uartDeviceCallback.onUartDeviceDataAvailable(this@UartDevice)
-                    delay(100)
-                }
-            }
-            callbackJob?.start()
-        }
-    }
-
-    actual fun unregisterUartDeviceCallback(uartDeviceCallback: UartDeviceCallback) {
-        //TODO keep track of multiple callbacks?
-        callbackJob?.cancel()
     }
 
     actual fun close() {

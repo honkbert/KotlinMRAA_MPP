@@ -3,6 +3,7 @@ package com.robgulley.hwint
 import kotlinx.coroutines.CoroutineScope
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalUnsignedTypes::class)
 expect class PeripheralManager constructor() {
     fun openI2cDevice(bus: String, address: Int): I2cDevice
     fun openGpio(pin: Int): GpioPin
@@ -10,15 +11,15 @@ expect class PeripheralManager constructor() {
 }
 
 fun Int.toHexString(): String {
-    val base = this.toString(16).toUpperCase()
+    val base = this.toString(16).uppercase()
     return if (base.length % 2 == 1) {
         "0x0$base"
     } else "0x$base"
 }
 
-fun Short.toHexString(): String = "0x" + this.toString(16).toUpperCase().padStart(4, '0')
-fun UByte.toHexString(): String = "0x" + this.toString(16).toUpperCase().padStart(4, '0')
-fun Byte.toHexString(): String = "0x" + this.toString(16).toUpperCase().padStart(2, '0')
+fun Short.toHexString(): String = "0x" + this.toString(16).uppercase().padStart(4, '0')
+fun UByte.toHexString(): String = "0x" + this.toString(16).uppercase().padStart(4, '0')
+fun Byte.toHexString(): String = "0x" + this.toString(16).uppercase().padStart(2, '0')
 
 internal fun Double.format(digits: Int): String {
     var dotAt = 1

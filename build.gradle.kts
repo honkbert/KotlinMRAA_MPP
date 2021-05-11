@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.5.0-M2"
+    kotlin("multiplatform") version "1.5.0"
     id("maven-publish")
 }
 
@@ -28,7 +28,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("com.robgulley:vector-lerp:1.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
             }
         }
         val desktopTest by creating {}
@@ -38,9 +38,9 @@ kotlin {
 
         val linuxX64Main by getting {
             dependsOn(desktopMain)
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
-            }
+//            dependencies {
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
+//            }
         }
         val linuxX64Test by getting
 

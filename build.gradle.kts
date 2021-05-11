@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "1.5.0-M2"
+    kotlin("multiplatform") version "1.5.0"
     id("maven-publish")
 }
 
@@ -38,7 +38,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib"))
 //                api("co.touchlab:stately-isolate:1.1.4-a1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
 //                implementation("org.jetbrains.kotlinx:atomicfu:0.15.1")
             }
         }
@@ -50,9 +50,7 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(desktopMain)
             dependencies {
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
 //                api("co.touchlab:stately-isolate:1.1.4-a1")
-//                implementation("org.jetbrains.kotlinx:atomicfu:0.14.4")
             }
         }
         val linuxX64Test by getting

@@ -69,6 +69,7 @@ private fun i2cHelloTest() = runBlocking {
     printlnTime("who am I? expect: 0x73, actual ${whoAmIBuffer.toHexString()}")
 }
 
+@OptIn(ObsoleteCoroutinesApi::class)
 private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, coroutineScope: CoroutineScope) =
     coroutineScope.launch {
         val peripheralManager = PeripheralManager()
@@ -99,7 +100,7 @@ private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, corou
 
         pinTarget.registerGpioCallback {
             val time = (getTimeMicros() - started) / 1000000.0
-            broadcastChannel.offer("$time")
+            broadcastChannel.trySend("$time").isSuccess
         }
         printlnTime("directions set")
 

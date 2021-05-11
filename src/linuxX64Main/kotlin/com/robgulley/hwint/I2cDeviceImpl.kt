@@ -6,7 +6,7 @@ import mraa.*
 
 class I2cDeviceImpl(busName: String, address: Int) : I2cDevice {
 
-    private val bus: Int = busName.toUpperCase().replace("I2C", "").toInt()
+    private val bus: Int = busName.uppercase().replace("I2C", "").toInt()
 
     private val _i2cContext: mraa_i2c_contextVar = nativeHeap.alloc()
     private val i2cBusContext: mraa_i2c_context

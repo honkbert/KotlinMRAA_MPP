@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collect
 import platform.posix.sleep
-import kotlin.native.concurrent.freeze
 import kotlin.system.getTimeMicros
 
 @OptIn(ExperimentalUnsignedTypes::class)

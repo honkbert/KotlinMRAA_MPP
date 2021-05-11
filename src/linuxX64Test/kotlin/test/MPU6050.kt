@@ -1,4 +1,4 @@
-package com.robgulley.hwint.test
+package test
 
 
 import com.robgulley.hwint.PeripheralManager

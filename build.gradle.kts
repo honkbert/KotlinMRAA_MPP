@@ -27,7 +27,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("co.touchlab:stately-isolate:1.1.4-a1")
+                implementation("co.touchlab:stately-isolate:1.1.7-a1")
             }
         }
 

@@ -31,8 +31,7 @@ expect class GpioPin(pinNum: Int) {
     }
 
     fun close()
-    fun registerGpioCallback(callback: GpioCallback)
-    fun unregisterGpioCallback()
     fun listenForTriggers()
     fun stopListenForTriggers()
+    fun boardNanoTime(): Long
 }

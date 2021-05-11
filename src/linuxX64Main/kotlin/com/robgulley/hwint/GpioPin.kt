@@ -2,6 +2,7 @@
 
 package com.robgulley.hwint
 
+import co.touchlab.stately.concurrency.AtomicBoolean
 import com.robgulley.time.Time
 import kotlinx.cinterop.*
 import mraa.*
@@ -10,6 +11,9 @@ import kotlin.native.concurrent.freeze
 @OptIn(ExperimentalUnsignedTypes::class)
 actual class GpioPin actual constructor(pinNum: Int) {
     private val pin = pinNum
+    private val pinValuePointer = StableRef.create(pin).asCPointer()
+
+    private var listenForTriggers: AtomicBoolean = AtomicBoolean(false)
 
     private val _gpioContext: mraa_gpio_contextVar = nativeHeap.alloc()
     private val gpioContext: mraa_gpio_context
@@ -106,52 +110,35 @@ actual class GpioPin actual constructor(pinNum: Int) {
     }
 
     actual fun close() {
-        unregisterGpioCallback()
         mraa_gpio_close(gpioContext)
         nativeHeap.free(_gpioContext)
     }
 
+    actual fun boardNanoTime() = Time.now().nanoTime
+
     actual fun listenForTriggers() {
-//        val argVoidPtr = StableRef.create(bullshitFlow).asCPointer()
+        listenForTriggers.value = true
         val funPtr = staticCFunction<COpaquePointer?, Unit> { args ->
             initRuntimeIfNeeded()
-//            val stableRef = args?.asStableRef<IsolateState<MutableSharedFlow<Long>>>()
-//            val func = stableRef?.get()
+            val stableRef = args?.asStableRef<Int>()
+            val pinNum = stableRef?.get() ?: -1
             val timestamp = Time.now().nanoTime
-            println("trigger")
-            GpioPinTriggers.gpioTriggers.access { it.tryEmit(timestamp) }
-//            func?.access { it.tryEmit(timestamp) }
+            GpioPinTriggers.gpioTriggers.access { map -> map.getOrPut(pinNum) { mutableListOf() }.add(timestamp) }
         }
         mraa_gpio_isr(
             gpioContext,
             edgeTriggerType.value,
             funPtr,
-            null
+            pinValuePointer
         ).ensureSuccess("set interrupt")
     }
 
     actual fun stopListenForTriggers() {
-        mraa_gpio_isr_exit(gpioContext)
-    }
-
-    actual fun registerGpioCallback(callback: GpioCallback) {
-        val argVoidPtr = StableRef.create(callback.freeze()).asCPointer()
-        val funPtr = staticCFunction<COpaquePointer?, Unit> { args ->
-            val stableRef = args?.asStableRef<GpioCallback>()
-            val func = stableRef?.get()
-            func?.invoke()
+        if (listenForTriggers.value) {
+            mraa_gpio_isr_exit(gpioContext)
+            pinValuePointer.asStableRef<Int>().dispose()
+            listenForTriggers.value = false
         }
-        mraa_gpio_isr(
-            gpioContext,
-            edgeTriggerType.value,
-            funPtr,
-            argVoidPtr
-        ).ensureSuccess("set interrupt")
-    }
-
-    actual fun unregisterGpioCallback() {
-        mraa_gpio_isr_exit(gpioContext)
-        //TODO figure out how to dispose callback
     }
 
     private fun Boolean.toInt() = when (this) {

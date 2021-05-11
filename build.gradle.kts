@@ -12,6 +12,7 @@ repositories {
 }
 
 kotlin {
+    jvm()
     macosX64()
     linuxX64 {
         binaries {
@@ -26,20 +27,19 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
-//                implementation("org.jetbrains.kotlinx:atomicfu:0.15.1")
-                api("co.touchlab:stately-isolate:1.1.4-a1")
-                implementation("com.robgulley:vector-lerp:1.0")
+                implementation("co.touchlab:stately-isolate:1.1.4-a1")
             }
+        }
+
+        val jvmMain by getting { //unused but necessary to make the commonizer think that the commonMain is truly common and not just native-common.
+            dependsOn(commonMain)
         }
 
         val desktopMain by creating {
             dependsOn(commonMain)
             dependencies {
                 implementation(kotlin("stdlib"))
-//                api("co.touchlab:stately-isolate:1.1.4-a1")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
-//                implementation("org.jetbrains.kotlinx:atomicfu:0.15.1")
+                implementation("com.robgulley:vector-lerp:1.0")
             }
         }
         val desktopTest by creating {}
@@ -49,11 +49,12 @@ kotlin {
 
         val linuxX64Main by getting {
             dependsOn(desktopMain)
+        }
+        val linuxX64Test by getting {
             dependencies {
-//                api("co.touchlab:stately-isolate:1.1.4-a1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
             }
         }
-        val linuxX64Test by getting
 
         val macosX64Main by getting {
             dependsOn(desktopMain)

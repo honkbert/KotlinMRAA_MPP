@@ -1,43 +1,23 @@
-import com.robgulley.hwint.*
-import com.robgulley.hwint.test.MPU6050
+import co.touchlab.stately.freeze
+import com.robgulley.hwint.GpioPin
+import com.robgulley.hwint.PeripheralManager
+import com.robgulley.hwint.format
+import com.robgulley.hwint.toHexString
 import com.robgulley.time.Sleep
 import kotlinx.cinterop.convert
-import kotlinx.cinterop.toKString
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collect
 import platform.posix.sleep
+import test.MPU6050
 import kotlin.system.getTimeMicros
 
 @OptIn(ExperimentalUnsignedTypes::class)
 fun main_foo(args: Array<String>): Unit = runBlocking {
     println("Hello, Kotlin/Native!")
-    uartTest(args[0], this)
-}
-
-@OptIn(ExperimentalUnsignedTypes::class)
-private fun uartTest(uartName: String, coroutineScope: CoroutineScope) = coroutineScope.launch {
-    val CHUNK_SIZE = 512
-    val uartDevice = PeripheralManager().openUartDevice(uartName, this)
-    uartDevice.baudRate = 9600
-    uartDevice.registerUartDeviceCallback(object : UartDeviceCallback {
-        override fun onUartDeviceDataAvailable(uart: UartDevice): Boolean {
-            val buffer = ByteArray(CHUNK_SIZE)
-            var count: Int
-            while (uart.read(buffer, buffer.size.toLong()).also { count = it } > 0) {
-                println("${buffer.toKString()} --- $count")
-            }
-            return true
-        }
-
-
-        override fun onUartDeviceError(uart: UartDevice, error: Int) {
-            throw Exception("uart device error $error")
-        }
-
-    })
+    //call test here
 }
 
 private suspend fun i2cReadWriteTest(coroutineScope: CoroutineScope) = coroutineScope.launch {
@@ -56,7 +36,7 @@ private suspend fun i2cReadWriteTest(coroutineScope: CoroutineScope) = coroutine
 
 private fun i2cHelloTest() = runBlocking {
     val peripheralManager = PeripheralManager()
-    val i2cDevice = peripheralManager.openI2cDevice("I2C0", 0x68)
+    val i2cDevice = peripheralManager.openI2cDevice("I2C0", 0x68, sync = true)
     delay(100)
     val whoAmIByte = i2cDevice.readRegByte(0x75)
     val whoAmIWord = i2cDevice.readRegWord(0x75)
@@ -86,21 +66,14 @@ private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, corou
         val receiveChannel = broadcastChannel.openSubscription().freeze()
 
         launch {
-//        CoroutineWorker.withContext(IODispatcher) {
             printlnTime("start")
             val list = mutableListOf<String>()
             printlnTime("start flow")
             receiveChannel.consumeEach { list.add(it) }
-//            flow.take(4).collect { list.add(it) }
             printlnTime("got flow")
             list.forEach { println(it) }
-//        }
         }
 
-        pinTarget.registerGpioCallback {
-            val time = (getTimeMicros() - started) / 1000000.0
-            broadcastChannel.trySend("$time").isSuccess
-        }
         printlnTime("directions set")
 
         for (count in 1..repeat) {
@@ -118,7 +91,6 @@ private fun gpioInterruptTest(sourcePin: Int, targetPin: Int, repeat: Int, corou
         }
 
         pinSource.close()
-        pinTarget.unregisterGpioCallback()
         pinTarget.close()
         printlnTime("closed")
         broadcastChannel.close()

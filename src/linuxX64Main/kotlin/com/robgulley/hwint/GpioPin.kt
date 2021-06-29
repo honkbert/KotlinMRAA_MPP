@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "EXPERIMENTAL_IS_NOT_ENABLED")
 
 package com.robgulley.hwint
 
@@ -6,7 +6,6 @@ import co.touchlab.stately.concurrency.AtomicBoolean
 import com.robgulley.time.Time
 import kotlinx.cinterop.*
 import mraa.*
-import kotlin.native.concurrent.freeze
 
 @OptIn(ExperimentalUnsignedTypes::class)
 actual class GpioPin actual constructor(pinNum: Int) {
@@ -25,16 +24,16 @@ actual class GpioPin actual constructor(pinNum: Int) {
 
     actual var value: Boolean
         get() {
-            if (direction != Direction.IN) throw Throwable("can't read input on output gpio pin $pin")
-            return mraa_gpio_read(gpioContext).ensurePosixCallResult("read $pin") { it != -1 }
+            if (direction != Direction.IN) throw MraaException("can't read input on output gpio pin $pin")
+            return mraa_gpio_read(gpioContext).ensurePosixCallResult("gpio read $pin") { it != -1 }
                 .toBoolean()
         }
         set(value) {
-            if (direction == Direction.IN) throw Throwable("can't write output on input gpio pin $pin")
+            if (direction == Direction.IN) throw MraaException("can't write output on input gpio pin $pin")
             mraa_gpio_write(
                 gpioContext,
                 value.toInt()
-            ).ensureSuccess("write $value to $pin")
+            ).ensureSuccess("gpio write $value to $pin")
         }
 
     actual suspend fun on() {
@@ -51,7 +50,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_dir(
                 gpioContext,
                 value.value
-            ).ensureSuccess("set ${value.name} pin: $pin")
+            ).ensureSuccess("gpio set ${value.name} pin: $pin")
         }
 
     actual var inputMode: InputMode = InputMode.ACTIVE_HIGH
@@ -60,7 +59,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_input_mode(
                 gpioContext,
                 value.value
-            ).ensureSuccess("set ${value.name} pin: $pin")
+            ).ensureSuccess("gpio set ${value.name} pin: $pin")
         }
 
     actual var edgeTriggerType: EdgeTriggerType = EdgeTriggerType.NONE
@@ -69,7 +68,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_edge_mode(
                 gpioContext,
                 value.value
-            ).ensureSuccess("set ${value.name} pin: $pin")
+            ).ensureSuccess("gpio set ${value.name} pin: $pin")
         }
 
     actual var outputMode: OutputMode = OutputMode.STRONG
@@ -78,7 +77,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             mraa_gpio_mode(
                 gpioContext,
                 value.value
-            ).ensureSuccess("set ${value.name} pin: $pin")
+            ).ensureSuccess("gpio set ${value.name} pin: $pin")
         }
 
     actual companion object {
@@ -130,7 +129,7 @@ actual class GpioPin actual constructor(pinNum: Int) {
             edgeTriggerType.value,
             funPtr,
             pinValuePointer
-        ).ensureSuccess("set interrupt")
+        ).ensureSuccess("gpio set interrupt")
     }
 
     actual fun stopListenForTriggers() {

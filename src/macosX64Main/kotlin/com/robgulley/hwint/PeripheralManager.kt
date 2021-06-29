@@ -1,7 +1,7 @@
 package com.robgulley.hwint
 
 actual class PeripheralManager actual constructor() {
-    actual fun openI2cDevice(bus: String, address: Int): com.robgulley.hwint.I2cDevice {
+    actual fun openI2cDevice(bus: String, address: Int, sync: Boolean): I2cDevice {
         TODO("Not yet implemented")
     }
 

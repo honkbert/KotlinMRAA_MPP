@@ -4,7 +4,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalUnsignedTypes::class)
 expect class PeripheralManager constructor() {
-    fun openI2cDevice(bus: String, address: Int): I2cDevice
+    fun openI2cDevice(bus: String, address: Int, sync: Boolean = false): I2cDevice
     fun openGpio(pin: Int): GpioPin
     fun openUartDevice(uartName: String): UartDevice
 }

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.robgulley"
-version = "1.0"
+version = "0.1"
 
 repositories {
     mavenCentral()
@@ -15,11 +15,6 @@ kotlin {
     jvm()
     macosX64()
     linuxX64 {
-        binaries {
-            executable {
-                entryPoint = "main_foo"
-            }
-        }
         val main by compilations.getting
         val mraa by main.cinterops.creating {}
     }
@@ -52,7 +47,7 @@ kotlin {
         }
         val linuxX64Test by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-RC-native-mt")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-native-mt")
             }
         }
 

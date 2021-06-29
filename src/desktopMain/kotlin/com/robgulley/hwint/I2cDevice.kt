@@ -11,4 +11,8 @@ interface I2cDevice {
     fun writeRegBuffer(register: Int, dataArray: ByteArray, length: Int)
 
     fun close()
+
+    fun bulk(action: I2cDevice.() -> Unit)
+
+    fun isOpen(): Boolean
 }

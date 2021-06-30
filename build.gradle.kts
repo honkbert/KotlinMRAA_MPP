@@ -1,10 +1,10 @@
 plugins {
-    kotlin("multiplatform") version "1.5.0-M2"
+    kotlin("multiplatform") version "1.5.0"
     id("maven-publish")
 }
 
 group = "com.robgulley"
-version = "1.0-SNAPSHOT"
+version = "0.1"
 
 repositories {
     mavenCentral()
@@ -12,39 +12,48 @@ repositories {
 }
 
 kotlin {
-    configure(listOf(linuxX64())) {
-        binaries {
-            executable {
-                entryPoint = "main"
-            }
-        }
+    jvm()
+    macosX64()
+    linuxX64 {
         val main by compilations.getting
-        val mraa by main.cinterops.creating {
-//            when (preset) {
-////                presets["macosX64"] -> includeDirs.headerFilterOnly("/usr/local/include")
-//                presets["linuxX64"] -> includeDirs.headerFilterOnly("/usr/include", "/usr/include/x86_64-linux-gnu")
-//            }
-        }
+        val mraa by main.cinterops.creating {}
     }
 
     sourceSets {
-        val commonMain by getting{
-            dependencies{
-                implementation(kotlin("stdlib"))
-                implementation ("com.robgulley:vector-lerp:1.0")
+        val commonMain by getting {
+            dependencies {
+                implementation("co.touchlab:stately-isolate:1.1.7-a1")
             }
         }
-        val commonTest by getting
+
+        val jvmMain by getting { //unused but necessary to make the commonizer think that the commonMain is truly common and not just native-common.
+            dependsOn(commonMain)
+        }
+
+        val desktopMain by creating {
+            dependsOn(commonMain)
+            dependencies {
+                implementation(kotlin("stdlib"))
+                implementation("com.robgulley:vector-lerp:1.0")
+            }
+        }
+        val desktopTest by creating {}
+
 //        val linuxArm64Main by getting
 //        val linuxArm64Test by getting
+
         val linuxX64Main by getting {
+            dependsOn(desktopMain)
+        }
+        val linuxX64Test by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3-native-mt")
-//                implementation ("com.autodesk:coroutineworker:0.6.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0-native-mt")
             }
         }
-        val linuxX64Test by getting
-//        val macosX64Main by getting
-//        val macosX64Test by getting
+
+        val macosX64Main by getting {
+            dependsOn(desktopMain)
+        }
+        val macosX64Test by getting
     }
 }

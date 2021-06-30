@@ -1,3 +1,0 @@
-interface Closeable {
-    fun close()
-}

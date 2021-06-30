@@ -1,4 +1,4 @@
-headers = mraa/gpio.h \ mraa/i2c.h \ mraa/common.h
+headers = mraa/gpio.h \ mraa/i2c.h \ mraa/common.h \ mraa/uart.h
 headerFilter = mraa/*.h
 
 compilerOpts.linux = -I/usr/include -I/usr/include/x86_64-linux-gnu
